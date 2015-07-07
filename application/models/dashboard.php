@@ -58,8 +58,8 @@ Class Dashboard extends CI_Model {
 	// Messages and Comments
 	public function create_message($data){
 		if($data != '') {
-			$query = "INSERT INTO messages (message, created_at, updated_at, user_id, author) VALUES (?,NOW(),NOW(),?,?)";
-			$values = array("{$data['message']}", "{$data['user_id']}", "{$data['current']['first_name']}"." "."{$data['current']['last_name']}" );
+			$query = "INSERT INTO messages (message, created_at, updated_at, user_id, author, likes) VALUES (?,NOW(),NOW(),?,?,?)";
+			$values = array("{$data['message']}", "{$data['user_id']}", "{$data['current']['first_name']}"." "."{$data['current']['last_name']}", "{$data['likes']}");
 			return $this->db->query($query, $values);
 		}
 	}
@@ -118,14 +118,34 @@ Class Dashboard extends CI_Model {
 
      public function get_image_by_id($data)
      {
-     	$query = "SELECT image FROM user_images WHERE user_id={$data['user_id']} AND image_id={$data['image_id']}";
+     	$query = "SELECT image, image_id, user_id FROM user_images WHERE user_id={$data}";
         return $this->db->query($query)->result_array();
      }
-     public function get_birthdays() {
+     public function get_cover_image_by_id($data)
+     {
+     	$query = "SELECT image, image_id, user_id FROM cover_images WHERE user_id={$data}";
+        return $this->db->query($query)->result_array();
+     }
+     public function get_all_images()
+     {
+     	$query = "SELECT image, image_id, user_id FROM user_images";
+     	return $this->db->query($query)->result_array();
+     }
+     public function get_birthdays()
+     {
      	$query = "SELECT first_name, last_name, birthday FROM users";
         return $this->db->query($query)->result_array();
      }
-
+     public function search_query($data)
+     {
+     	$query = "SELECT * FROM messages where message like '%".$data."%' or author like '%".$data."%'";
+        return $this->db->query($query)->result_array();
+     }
+     public function update_likes($data)
+     {
+     	$query = "UPDATE messages SET likes=likes+1 WHERE messages_id = {$data}";
+        return $this->db->query($query);
+     }
 }
 
 

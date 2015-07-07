@@ -1,31 +1,33 @@
 <?php
     $current = $this->session->userdata('user');
- // working get image by id code below
+    // var_dump($user);
+    // die();
     /*** assign the image id ***/
-    $image_id = 1;
+    $user_image_id = !empty($user['image'][0]['image_id']);
+    if($user_image_id == "") {
+        $image_id = 1;
+    } else {
+        $image_id = $user['image'][0]['image_id'];
+    }
     try {
         /*** connect to the database ***/
         $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
         /*** set the PDO error mode to exception ***/
         $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         /*** The sql statement ***/
-        $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
+        $sql = "SELECT image, image_type FROM cover_images WHERE image_id=$image_id";
         /*** prepare the sql ***/
         $stmt = $dbh->prepare($sql);
         /*** exceute the query ***/
         $stmt->execute();
-        /*** set the fetch mode to associative array ***/
+        // ** set the fetch mode to associative array **
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         /*** set the header for the image ***/
         $array = $stmt->fetch();
         /*** check we have a single image and type ***/
         if(sizeof($array) == 2) {
-            /*** set the headers and display the image ***/
-            header("Content-type: ".$array['image_type']);
-            /*** output the image ***/
-            echo $array['image'];
-            } else {
-                throw new Exception("Out of bounds Error");
+            /*** display the image ***/
+            $image = base64_encode( $array['image']);
             }
         }
     catch(PDOException $e) {
@@ -35,7 +37,7 @@
     catch(Exception $e) {
         echo $e->getMessage();
     }
-         // die("---end---");
+ // <!-- End Image from database -->
 
 ?>
 
@@ -51,7 +53,7 @@
         body {
             background-color: whitesmoke;
         }
-     /* message feed header */
+        /*message feed header */
         .new-test {
             background-color: yellow;
             height: 50px;
@@ -65,6 +67,7 @@
             font-family: 'Helvetica';
             color: #3E5C99;
             font-size: 30px;
+            text-shadow: 3px 3px white;
         }
         #fb-color {
             background-color: #3E5C99;
@@ -111,6 +114,10 @@
         }
         .down-search {
             margin-top: 10px;
+        }
+        .down-search-button {
+            margin-top: 10px;
+
         }
         #padding {
             padding: 0 0 0 14px;
@@ -248,6 +255,17 @@
             textarea:focus {
                 outline: none;
             }
+        .jumbotron {
+            background:
+            url(data:image/gif;base64,<?= $image ?>) no-repeat;
+            background-size: 100% 100%;
+        }
+        /* Media Queries */
+/*        @media (min-width: 767px) {
+            .down-search {
+                width: 200px;
+            }
+        }*/
     </style>
 </head>
 <body>
@@ -264,16 +282,16 @@
             <span class="icon-bar"></span>
           </button>
           <div class="form-group">
-            <div class="form-inline" >
+              <form class="form-inline" method="post" action="/main/search" >
                 <a href="/messageBoard"><img src="/assets/img/fb-logo.png" height="50" id="header_logo" alt="header_logo"></a>
                 <div class="input-group">
-                  <input type="text" class="form-control down-search" placeholder="Search">
+                  <input type="text" name="search" class="form-control down-search search" placeholder="Search">
                   <span class="input-group-btn">
-                    <button class="btn down-search" id="fb-button-search" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+                    <button class="btn down-search search" id="fb-button-search" type="submit"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
                   </span>
                 </div>
-              </div>
-          </div>
+              </form>
+            </div>
         </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse pull-right">
@@ -301,12 +319,113 @@
 
     <!-- Cover Photo -->
     <!-- <div id="down"></div> -->
-    <div class="jumbotron">
+    <div class="jumbotron" id="down">
       <div class="container">
-        <h2 id="down"><p id="fb-text-big"><img id="profile_pic" src="/assets/img/no_profile.png" height="100" alt="no_pic"> <?=ucwords($user['user']['first_name'].' '.$user['user']['last_name'])?></p></h2>
+        <!-- <img src="/assets/img/bball.jpg" id="cover_image" alt=""> -->
+        <h2 id="down">
+            <p id="fb-text-big">
+                <!-- Imgae from database -->
+                <?php
+                /*** assign the image id ***/
+                $user_image_id = !empty($user['image'][0]['image_id']);
+                if($user_image_id == "") {
+                    $image_id = 1;
+                } else {
+                    $image_id = $user['image'][0]['image_id'];
+                }
+                try {
+                    /*** connect to the database ***/
+                    $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
+                    /*** set the PDO error mode to exception ***/
+                    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                    /*** The sql statement ***/
+                    $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
+                    /*** prepare the sql ***/
+                    $stmt = $dbh->prepare($sql);
+                    /*** exceute the query ***/
+                    $stmt->execute();
+                    // ** set the fetch mode to associative array **
+                    $stmt->setFetchMode(PDO::FETCH_ASSOC);
+                    /*** set the header for the image ***/
+                    $array = $stmt->fetch();
+                    /*** check we have a single image and type ***/
+                    if(sizeof($array) == 2) {
+                        /*** display the image ***/
+                        echo '<img height="100" width="100" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
+                        } else {
+                        echo '<img height="100" width="100" src="/assets/img/no_profile.png"/>';
+                        }
+                    }
+                catch(PDOException $e) {
+                    echo $e->getMessage();
+
+                }
+                catch(Exception $e) {
+                    echo $e->getMessage();
+                }
+                ?> <!-- End Image from database -->
+                <?=ucwords($user['user']['first_name'].' '.$user['user']['last_name'])?>
+            </p>
+        </h2>
         <p id="fb-text-big"><?=ucwords($user['user']['description'])?></p>
       </div>
     </div>
+
+            <!-- upload image  -->
+            <div class="pull-right">
+              <form enctype="multipart/form-data" action="/main/upload_cover/<?= htmlentities($_SERVER['PHP_SELF']) ?>" method="post">
+                  <label for="userfile">Upload Cover Image </label>
+                  <input type="hidden" name="MAX_FILE_SIZE" value="99999999"/>
+                  <div><input name="userfile" type="file" /></div>
+                  <div><input type="submit" class="btn" id="fb-button" value="Submit"/></div>
+              </form>
+                          <?php
+            /*** check if a file was submitted ***/
+            if(!isset($_FILES['userfile']))
+                {
+                echo '<p>Please select a file</p>';
+                }
+            else
+                {
+                try    {
+                    upload();
+                    /*** give praise and thanks to the php gods ***/
+                    echo '<p>Thank you for submitting</p>';
+                    }
+                catch(Exception $e)
+                    {
+                    echo '<h4>'.$e->getMessage().'</h4>';
+                    }
+                }
+            ?>
+            </div>
+
+            <!-- upload image  -->
+              <form enctype="multipart/form-data" action="/main/upload/<?= htmlentities($_SERVER['PHP_SELF']) ?>" method="post">
+                  <label for="userfile">Upload Profile Image </label>
+                  <input type="hidden" name="MAX_FILE_SIZE" value="99999999" />
+                  <div><input name="userfile" type="file" /></div>
+                  <div><input class="btn" id="fb-button" type="submit" value="Submit" /></div>
+              </form>
+            <?php
+            /*** check if a file was submitted ***/
+            if(!isset($_FILES['userfile']))
+                {
+                echo '<p>Please select a file</p>';
+                }
+            else
+                {
+                try    {
+                    upload();
+                    /*** give praise and thanks to the php gods ***/
+                    echo '<p>Thank you for submitting</p>';
+                    }
+                catch(Exception $e)
+                    {
+                    echo '<h4>'.$e->getMessage().'</h4>';
+                    }
+                }
+            ?>
 
 <!-- divider -->
 <div class="col-sm-3">
@@ -374,31 +493,7 @@
               </div>
                 <input class="btn" id="fb-button" type="submit" value="Change Info">
             </form>
-            <!-- upload image  -->
-              <form enctype="multipart/form-data" action="/main/upload/<?= htmlentities($_SERVER['PHP_SELF']) ?>" method="post">
-                  <input type="hidden" name="MAX_FILE_SIZE" value="99999999" />
-                  <div><input name="userfile" type="file" /></div>
-                  <div><input class="btn btn-info" type="submit" value="Submit" /></div>
-              </form>
-<?php
-/*** check if a file was submitted ***/
-if(!isset($_FILES['userfile']))
-    {
-    echo '<p>Please select a file</p>';
-    }
-else
-    {
-    try    {
-        upload();
-        /*** give praise and thanks to the php gods ***/
-        echo '<p>Thank you for submitting</p>';
-        }
-    catch(Exception $e)
-        {
-        echo '<h4>'.$e->getMessage().'</h4>';
-        }
-    }
-?>
+
 
         </div>
 

@@ -203,7 +203,8 @@ class Main extends CI_Controller {
 			'messages' => $this->dashboard->get_messages(),
 			'comments' => $this->dashboard->get_comments(),
 			'not_friends' => $this->dashboard->get_not_friends($id),
-			'birthdays' => $this->dashboard->get_birthdays()
+			'birthdays' => $this->dashboard->get_birthdays(),
+			'images' => $this->dashboard->get_all_images()
 		);
 		$this->load->view('messageBoard', array('data' => $data));
 	}
@@ -213,7 +214,8 @@ class Main extends CI_Controller {
 		$data =  array(
 			'current' => $current_user,
 			'message' => $this->input->post("message"),
-			'user_id' => $id
+			'user_id' => $id,
+			'likes' => 0
 		);
 		$this->dashboard->create_message($data);
 		redirect("/messageBoard");
@@ -264,7 +266,9 @@ class Main extends CI_Controller {
 			'current' => $current_user,
 			'user' => $this->dashboard->get_user_by_id($id),
 			'messages' => $this->dashboard->get_private_messages(),
-            'friends' => $this->dashboard->get_friends($id)
+            'friends' => $this->dashboard->get_friends($id),
+            'image' => $this->dashboard->get_image_by_id($id),
+            'cover_image' => $this->dashboard->get_cover_image_by_id($id)
 		);
 		if(empty($user['description'])) {
 			$user['description'] = "This user didn't set a description!";
@@ -278,7 +282,9 @@ class Main extends CI_Controller {
 			'current' => $current_user,
 			'user' => $this->dashboard->get_user_by_id($id),
 			'messages' => $this->dashboard->get_private_messages(),
-            'friends' => $this->dashboard->get_friends($id)
+            'friends' => $this->dashboard->get_friends($id),
+            'image' => $this->dashboard->get_image_by_id($id),
+            'cover_image' => $this->dashboard->get_cover_image_by_id($id)
 		);
 
 		if(empty($user['user']['description'])) {
@@ -290,15 +296,13 @@ class Main extends CI_Controller {
 		$current_user = $this->session->userdata('user');
 		$id = $current_user['id'];
 		$this->load->model('dashboard');
-		$image_data['image_id'] = 2;
-		$image_data['user_id'] =  7;
-
 		$user = array(
 			'current' => $current_user,
 			'user' => $this->dashboard->get_user_by_id($id),
 			'messages' => $this->dashboard->get_private_messages(),
             'friends' => $this->dashboard->get_friends($id),
-            'image' => $this->dashboard->get_image_by_id($image_data)
+            'image' => $this->dashboard->get_image_by_id($id),
+            'cover_image' => $this->dashboard->get_cover_image_by_id($id)
 		);
 		if(empty($user['user']['description'])) {
 			$user['user']['description'] = "This user didn't set a description!";
@@ -351,10 +355,77 @@ class Main extends CI_Controller {
 		    throw new Exception("Unsupported Image Format!");
 		    }
 		}
+		public function upload_cover(){
+			$current_user = $this->session->userdata('user');
+			$id = $current_user['id'];
+			/*** check if a file was uploaded ***/
+			if(is_uploaded_file($_FILES['userfile']['tmp_name']) && getimagesize($_FILES['userfile']['tmp_name']) != false)
+			    {
+			    /***  get the image info. ***/
+			    $size = getimagesize($_FILES['userfile']['tmp_name']);
+			    /*** assign our variables ***/
+			    $type = $size['mime'];
+			    $imgfp = fopen($_FILES['userfile']['tmp_name'], 'rb');
+			    $size = $size[3];
+			    $name = $_FILES['userfile']['name'];
+			    $maxsize = 99999999;
+
+			    /***  check the file is less than the maximum file size ***/
+			    if($_FILES['userfile']['size'] < $maxsize )
+			        {
+				        /*** connect to db ***/
+				        $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
+		                /*** set the error mode ***/
+		                $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			            /*** our sql query ***/
+				        $stmt = $dbh->prepare("INSERT INTO cover_images (image_type ,image, image_size, image_name, user_id) VALUES (? ,?, ?, ?, $id)");
+				        /*** bind the params ***/
+				        $stmt->bindParam(1, $type);
+				        $stmt->bindParam(2, $imgfp, PDO::PARAM_LOB);
+				        $stmt->bindParam(3, $size);
+				        $stmt->bindParam(4, $name);
+				        /*** execute the query ***/
+				        $stmt->execute();
+				        redirect('edit_profile');
+			        }
+			    else
+			        {
+			        /*** throw an exception is image is not of type ***/
+			        throw new Exception("File Size Error");
+			        }
+			    }
+			else
+			    {
+			    // if the file is not less than the maximum allowed, print an error
+			    throw new Exception("Unsupported Image Format!");
+			    }
+		}
+	public function search() {
+		$current_user = $this->session->userdata('user');
+		$id = $current_user['id'];
+		$this->load->model('dashboard');
+		$search = $this->input->post("search");
+		$data = array(
+			'current' => $current_user,
+			'messages' => $this->dashboard->get_messages(),
+			'comments' => $this->dashboard->get_comments(),
+			'not_friends' => $this->dashboard->get_not_friends($id),
+			'birthdays' => $this->dashboard->get_birthdays(),
+			'results' => $this->dashboard->search_query($search)
+		);
+		$this->load->view('serach_results', array('data' => $data));
+	}
+	public function like_button() {
+		$this->load->model('dashboard');
+		$data = $this->input->post('message_id');
+		$this->dashboard->update_likes($data);
+		redirect('messageBoard');
+	}
 	public function logoff() {
 		$this->session->unset_userdata('user');
 		redirect('/');
 	}
+
 }
 
 //end of main controller

@@ -11,4 +11,5 @@ $route['profile'] = '/main/profile';
 $route['edit/user/(:any)'] = '/main/edit/$1';
 $route['messageBoard'] = '/main/messageBoard';
 $route['edit_profile'] = '/main/edit_profile';
+$route['search_results'] = '/main/search_results';
 //end of routes.php

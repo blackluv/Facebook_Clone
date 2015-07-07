@@ -1,8 +1,8 @@
 <?php
-    $current = $this->session->userdata('user');
     // var_dump($data);
     // die();
-?>
+ ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -192,9 +192,16 @@
             font-size: 16px;
             padding-bottom: 0px;
         }
-        #no-style {
-            background: none;
-            border-style: none;
+        #green {
+            background-color: lightgreen;
+            height: 500px;
+        }
+        #blue {
+            background-color: lightblue
+        }
+        #yellow {
+            background-color: gold;
+            height: 500px;
         }
         textarea {
             -webkit-box-sizing: border-box;
@@ -210,12 +217,6 @@
             textarea:focus {
                 outline: none;
             }
-        /* Media Queries */
-        @media (max-width: 767px) {
-            #search {
-                width: 200px;
-            }
-        }
     </style>
 
 </head>
@@ -235,9 +236,9 @@
               <form class="form-inline" method="post" action="/main/search" >
                 <a href="/messageBoard"><img src="/assets/img/fb-logo.png" height="50" id="header_logo" alt="header_logo"></a>
                 <div class="input-group">
-                  <input type="text" name="search" class="form-control down-search search" placeholder="Search">
+                  <input type="text" name="search" class="form-control down-search" placeholder="Search">
                   <span class="input-group-btn">
-                    <button class="btn down-search search" id="fb-button-search" type="submit"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+                    <button class="btn down-search" id="fb-button-search" type="submit"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
                   </span>
                 </div>
               </form>
@@ -294,7 +295,7 @@
 
 if (isset($data['messages'])) {
 
-    foreach (array_reverse($data['messages']) as $message) {
+    foreach (array_reverse($data['results']) as $message) {
     echo '<table class="table table-striped">
             <thead>
                 <tr>
@@ -302,55 +303,7 @@ if (isset($data['messages'])) {
                 </tr>
             </thead>
             <tbody>'.
-                     '<tr><td id="box" class="col-xs-8"><p>';
-                $user_image_id = "";
-                    foreach ($data['images'] as $image) {
-                        if($message['user_id'] == $image['user_id']) {
-                            $current_image = $image;
-                            $user_image_id = $current_image['image_id'];
-                        }
-
-                    /*** assign the image id ***/
-                    if(empty($user_image_id)) {
-                        $image_id = 1;
-                    } else {
-                        $image_id = $user_image_id;
-                    }
-                }
-
-                try {
-                    /*** connect to the database ***/
-                    $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
-                    /*** set the PDO error mode to exception ***/
-                    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                    /*** The sql statement ***/
-                    $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
-                    /*** prepare the sql ***/
-                    $stmt = $dbh->prepare($sql);
-                    /*** exceute the query ***/
-                    $stmt->execute();
-                    // ** set the fetch mode to associative array **
-                    $stmt->setFetchMode(PDO::FETCH_ASSOC);
-                    /*** set the header for the image ***/
-                    $array = $stmt->fetch();
-                    /*** check we have a single image and type ***/
-                    if(sizeof($array) == 2) {
-                        /*** display the image ***/
-                        echo '<img height="60" width="60" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
-                        } else {
-                        echo '<img height="60" width="60" src="/assets/img/no_profile.png"/>';
-                        }
-                    }
-                catch(PDOException $e) {
-                    echo $e->getMessage();
-
-                }
-                catch(Exception $e) {
-                    echo $e->getMessage();
-                }
-             // <!-- End Image from database -->
-
-                    echo " ".$message['message'].'</p></td></tr>'.
+                     '<tr><td id="box" class="col-xs-8"><p>'.$message['message'].'</p></td></tr>'.
             '</tbody>
             </table>'.
             '<table class="table table-striped">
@@ -362,71 +315,13 @@ if (isset($data['messages'])) {
                 <tbody>';
                     foreach ($data['comments'] as $comment) {
                         if($message['messages_id'] === $comment['messages_id']) {
-
-                    echo '<tr><td id="box" class="col-xs-8"><p>';
-                    $user_image_id = "";
-                        foreach ($data['images'] as $image) {
-                            if($comment['users_id'] == $image['user_id']) {
-                                $current_image = $image;
-                                $user_image_id = $current_image['image_id'];
-                            }
-
-                        /*** assign the image id ***/
-                        if(empty($user_image_id)) {
-                            $image_id = 1;
-                        } else {
-                            $image_id = $user_image_id;
+                             echo '<tr><td id="box" class="col-xs-8"><p>'.$comment['comment'].'</p><p class="pull-right control-group">'.$comment['author'].", ".date('M d Y',strtotime($comment['created_at'])).'</p></td></tr>';
                         }
                     }
+        echo '</tbody>
+        </table>'.
 
-                    try {
-                        /*** connect to the database ***/
-                        $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
-                        /*** set the PDO error mode to exception ***/
-                        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                        /*** The sql statement ***/
-                        $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
-                        /*** prepare the sql ***/
-                        $stmt = $dbh->prepare($sql);
-                        /*** exceute the query ***/
-                        $stmt->execute();
-                        // ** set the fetch mode to associative array **
-                        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-                        /*** set the header for the image ***/
-                        $array = $stmt->fetch();
-                        /*** check we have a single image and type ***/
-                        if(sizeof($array) == 2) {
-                            /*** display the image ***/
-                            echo '<img height="60" width="60" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
-                            } else {
-                            echo '<img height="60" width="60" src="/assets/img/no_profile.png"/>';
-                            }
-                        }
-                    catch(PDOException $e) {
-                        echo $e->getMessage();
-
-                    }
-                    catch(Exception $e) {
-                        echo $e->getMessage();
-                    }
-                 // <!-- End Image from database -->
-
-                             echo " ".$comment['comment'].'</p><p class="pull-right control-group" id="fb-text">'.$comment['author'].", ".date('M d Y',strtotime($comment['created_at'])).'</p></td></tr>';
-                        }
-                    }
-        echo '<tr><td id="white-box">
-                    <h5 class="pull-right">('.$message['likes'].')</h5>
-                    <form name="likes" action="/main/like_button" method="post">
-                        <input type="hidden" name="message_id" value="'.$message['messages_id'].'">
-                        <button type="submit" id="no-style" class="pull-right">
-                            <img src="/assets/img/like.png" height="25" width="25" alt="like">
-                        </button>
-                    </form>
-                </td></tr>
-            </tbody>
-        </table>'
-
-        .'<div class="col-xs-12" id="white-box-comment">
+            '<div class="col-xs-12" id="white-box-comment">
                 <form action="/main/post_comment/'.$data['current']['id'].'" method="post">
                     <div class="input-group">
                        <input type="text" class="form-control" name="comment" placeholder="Write a comment...">
@@ -440,6 +335,7 @@ if (isset($data['messages'])) {
             }
         }
          ?>
+
 
     <!-- </div> -->
 </div>
@@ -458,9 +354,8 @@ if (isset($data['messages'])) {
                         <thead>
                             <tr>
                                 <td id="white-box">
-                                    <p id="fb-text">
+                                    <p id="fb-text"><img src="/assets/img/bday.png" alt="bday">Birthdays:
                                         <?php
-                                            $names = "";
                                             $today = date('m/d/Y');
                                             $check = substr($today, 0, -5);
                                                 if($check[0] == 0) {
@@ -470,11 +365,8 @@ if (isset($data['messages'])) {
                                                 $month_day = substr($birthday['birthday'], 0, -5);
                                                 if($month_day == $check) {
                                                     $names = $birthday['first_name']." ".$birthday['last_name']." ";
-                                                    echo '<img src="/assets/img/bday.png" alt="bday">Birthdays:'.$names;
+                                                    echo $names;
                                                 }
-                                            }
-                                            if(empty($names)) {
-                                                echo "No birthday's today";
                                             }
                                          ?>
                                     </p>
@@ -484,7 +376,7 @@ if (isset($data['messages'])) {
                         <tbody>
                             <tr>
                                 <td id="white-box-bday"> <p id="bday-text">Trending</p>
-                                    <p id="fb-text"><img src="/assets/img/trending.png" alt="trending"> USA Women win the world cup with style</p>
+                                    <p id="fb-text"><img src="/assets/img/trending.png" alt="trending"> Bubba Watson making moves at the greenbrieir</p>
                                     <p id="fb-text"><img src="/assets/img/trending.png" alt="trending"> RG3 has been abusing HGH, maybe he won't get injured this year?</p>
                                     <p id="fb-text"><img src="/assets/img/trending.png" alt="trending"> Carmelo Has been training hard in the offseason, lol</p>
                                 </td>
@@ -494,7 +386,7 @@ if (isset($data['messages'])) {
                 </div>
             </div>
         </div>
-
+s
 <!-- divider -->
 <div class="col-sm-1">
     <div class="container">
@@ -516,58 +408,7 @@ if (isset($data['messages'])) {
                         <?php
                             foreach ($data['not_friends'] as $not_friends) { ?>
                                 <tr>
-                                    <td id="white-box">
-                <?php
-
-                    $user_image_id = "";
-                    foreach ($data['images'] as $image) {
-                        if($not_friends['id'] == $image['user_id']) {
-                            $current_image = $image;
-                            $user_image_id = $current_image['image_id'];
-                        }
-
-                    /*** assign the image id ***/
-                    if(empty($user_image_id)) {
-                        $image_id = 1;
-                    } else {
-                        $image_id = $user_image_id;
-                    }
-                }
-
-                try {
-                    /*** connect to the database ***/
-                    $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
-                    /*** set the PDO error mode to exception ***/
-                    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                    /*** The sql statement ***/
-                    $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
-                    /*** prepare the sql ***/
-                    $stmt = $dbh->prepare($sql);
-                    /*** exceute the query ***/
-                    $stmt->execute();
-                    // ** set the fetch mode to associative array **
-                    $stmt->setFetchMode(PDO::FETCH_ASSOC);
-                    /*** set the header for the image ***/
-                    $array = $stmt->fetch();
-                    /*** check we have a single image and type ***/
-                    if(sizeof($array) == 2) {
-                        /*** display the image ***/
-                        echo '<img height="40" width="40" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
-                        } else {
-                        echo '<img height="40" width="40" src="/assets/img/no_profile.png"/>';
-                        }
-                    }
-                catch(PDOException $e) {
-                    echo $e->getMessage();
-
-                }
-                catch(Exception $e) {
-                    echo $e->getMessage();
-                }
-             // <!-- End Image from database -->
-
-                                echo ' <a id="fb-text" href="/main/show/'.$not_friends['id'].'">'.$not_friends['first_name']." ".$not_friends['last_name'].'</a>'; ?>
-                                    </td>
+                                    <td id="white-box"><?= '<a href="/main/show/'.$not_friends['id'].'"><p>'.$not_friends['first_name']." ".$not_friends['last_name'].'</p></a><br>'; ?></td>
                                     <td id="white-box"><a href="/main/add_friend/<?= $not_friends['id']?>"><button class="btn" id="fb-button">Add as Friend</button></a></td>
                                 </tr>
                             <?php }  ?>

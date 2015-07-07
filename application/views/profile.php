@@ -2,6 +2,45 @@
     $current = $this->session->userdata('user');
     // var_dump($user);
     // die();
+    /*** assign the image id ***/
+    $user_image_id = !empty($user['image'][0]['image_id']);
+    if($user_image_id == "") {
+        $image_id = 1;
+    } else {
+        $image_id = $user['image'][0]['image_id'];
+    }
+    try {
+        /*** connect to the database ***/
+        $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
+        /*** set the PDO error mode to exception ***/
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        /*** The sql statement ***/
+        $sql = "SELECT image, image_type FROM cover_images WHERE image_id=$image_id";
+        /*** prepare the sql ***/
+        $stmt = $dbh->prepare($sql);
+        /*** exceute the query ***/
+        $stmt->execute();
+        // ** set the fetch mode to associative array **
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        /*** set the header for the image ***/
+        $array = $stmt->fetch();
+        /*** check we have a single image and type ***/
+        if(sizeof($array) == 2) {
+            /*** display the image ***/
+            $image = base64_encode( $array['image']);
+            // echo '<img height="100" width"100" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
+            } else {
+            // echo '<img height="100" width"100" src="/assets/img/no_profile.png"/>';
+            }
+        }
+    catch(PDOException $e) {
+        echo $e->getMessage();
+
+    }
+    catch(Exception $e) {
+        echo $e->getMessage();
+    }
+ // <!-- End Image from database -->
 ?>
 
 <!DOCTYPE html>
@@ -21,6 +60,12 @@
         #fb-text {
             font-family: 'Helvetica';
             color: #3E5C99;
+        }
+        #fb-text-big {
+            font-family: 'Helvetica';
+            color: #3E5C99;
+            font-size: 30px;
+            text-shadow: 3px 3px white;
         }
         #fb-color {
             background-color: #3E5C99;
@@ -204,6 +249,10 @@
             textarea:focus {
                 outline: none;
             }
+        .jumbotron {
+            background: url(data:image/gif;base64,<?= $image ?>) no-repeat;
+            background-size: 100% 100%;
+        }
     </style>
 </head>
 <body>
@@ -218,17 +267,17 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <div class="form-group">
-             <div class="form-inline" >
+            <div class="form-group">
+              <form class="form-inline" method="post" action="/main/search" >
                 <a href="/messageBoard"><img src="/assets/img/fb-logo.png" height="50" id="header_logo" alt="header_logo"></a>
                 <div class="input-group">
-                  <input type="text" class="form-control down-search" placeholder="Search">
+                  <input type="text" name="search" class="form-control down-search search" placeholder="Search">
                   <span class="input-group-btn">
-                    <button class="btn down-search" id="fb-button-search" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+                    <button class="btn down-search search" id="fb-button-search" type="submit"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
                   </span>
                 </div>
-              </div>
-          </div>
+              </form>
+            </div>
         </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse pull-right">
@@ -255,18 +304,62 @@
     </nav>
 
     <!-- Cover Photo -->
-    <div class="jumbotron">
+    <div class="jumbotron" id="down">
       <div class="container">
         <?
         if($this->session->flashdata('edit_errors')) {
             echo "<p>".$this->session->flashdata('edit_errors')."</p>";
         }
         ?>
-        <h2 id="down"><img id="profile_pic" src="/assets/img/no_profile.png" height="100" alt="no_pic"> <?=ucwords($user['current']['first_name'].' '.$user['current']['last_name'])?></h2>
-        <p id="fb-text"><?=ucwords($user['user']['description'])?></p>
+        <h2 id="down">
+            <p id="fb-text-big">
+                <!-- Imgae from database -->
+                <?php
+                /*** assign the image id ***/
+                $user_image_id = !empty($user['image'][0]['image_id']);
+                if($user_image_id == "") {
+                    $image_id = 1;
+                } else {
+                    $image_id = $user['image'][0]['image_id'];
+                }
+                try {
+                    /*** connect to the database ***/
+                    $dbh = new PDO("mysql:host=localhost;dbname=facebook", 'root', 'root');
+                    /*** set the PDO error mode to exception ***/
+                    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                    /*** The sql statement ***/
+                    $sql = "SELECT image, image_type FROM user_images WHERE image_id=$image_id";
+                    /*** prepare the sql ***/
+                    $stmt = $dbh->prepare($sql);
+                    /*** exceute the query ***/
+                    $stmt->execute();
+                    // ** set the fetch mode to associative array **
+                    $stmt->setFetchMode(PDO::FETCH_ASSOC);
+                    /*** set the header for the image ***/
+                    $array = $stmt->fetch();
+                    /*** check we have a single image and type ***/
+                    if(sizeof($array) == 2) {
+                        /*** display the image ***/
+                        echo '<img height="100" width="100" src="data:image/jpeg;base64,'.base64_encode( $array['image'] ).'"/>';
+                        } else {
+                        echo '<img height="100" width="100" src="/assets/img/no_profile.png"/>';
+                        }
+                    }
+                catch(PDOException $e) {
+                    echo $e->getMessage();
+
+                }
+                catch(Exception $e) {
+                    echo $e->getMessage();
+                }
+                ?>
+                <!-- End Image from database -->
+                <?=ucwords($user['current']['first_name'].' '.$user['current']['last_name'])?>
+            </p>
+        </h2>
+        <p id="fb-text-big"><?=ucwords($user['user']['description'])?></p>
       </div>
     </div>
-
 
     <div class="col-sm-4" id="down">
             <div class="row" id="white-box">
